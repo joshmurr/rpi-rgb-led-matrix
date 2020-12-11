@@ -14,7 +14,7 @@ class RGBMatrix {
 
   // Here the set-up  [>] - Only one 16x32 panel
   int width() const { return 32; }
-  int height() const { return 16; }
+  int height() const { return 32; }
   void SetPixel(uint8_t x, uint8_t y,
                 uint8_t red, uint8_t green, uint8_t blue);
 
@@ -27,10 +27,10 @@ private:
   GPIO *const io_;
 
   enum {
-    kDoubleRows = 8,     // Physical constant of the used board.
+    kDoubleRows = 16,     // Physical constant of the used board.
     kChainedBoards = 1,   // Number of boards that are daisy-chained.
     kColumns = kChainedBoards * 32,
-    kPWMBits = 4          // maximum PWM resolution.
+    kPWMBits = 7          // maximum PWM resolution.
   };
 
   union IoBits {
@@ -40,7 +40,7 @@ private:
       unsigned int clock  : 1;   // 3
       unsigned int strobe : 1;   // 4
       unsigned int unused2 : 2;  // 5..6
-      unsigned int row : 3;  // 7..9
+      unsigned int row : 4;  // 7..9
       unsigned int unused3 : 7;  // 10..16
       unsigned int r1 : 1;   // 17
       unsigned int g1 : 1;   // 18

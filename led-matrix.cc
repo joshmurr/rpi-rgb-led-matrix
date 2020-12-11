@@ -62,7 +62,7 @@ RGBMatrix::RGBMatrix(GPIO *io) : io_(io) {
   b.bits.output_enable = b.bits.clock = b.bits.strobe = 1;
   b.bits.r1 = b.bits.g1 = b.bits.b1 = 1;
   b.bits.r2 = b.bits.g2 = b.bits.b2 = 1;
-  b.bits.row = 0x7; // 8 rows, 0-based
+  b.bits.row = 0xF; // 8 rows, 0-based
   
   // Initialize outputs, make sure that all of these are supported bits.
   const uint32_t result = io_->InitOutputs(b.raw);
@@ -92,8 +92,8 @@ void RGBMatrix::SetPixel(uint8_t x, uint8_t y,
 
   for (int b = 0; b < kPWMBits; ++b) {
     uint8_t mask = 1 << b;
-    IoBits *bits = &bitplane_[b].row[y & 0x7].column[x];  // 8 rows, 0-based
-    if (y < 8) {    // Upper sub-panel. - 16 actual rows; 8 high & 8 low
+    IoBits *bits = &bitplane_[b].row[y & 0xF].column[x];  // 8 rows, 0-based
+    if (y < 16) {    // Upper sub-panel. - 16 actual rows; 8 high & 8 low
       bits->bits.r1 = (red & mask) == mask;
       bits->bits.g1 = (green & mask) == mask;
       bits->bits.b1 = (blue & mask) == mask;
@@ -112,7 +112,7 @@ void RGBMatrix::UpdateScreen() {
   serial_mask.bits.clock = 1;
 
   IoBits row_mask;
-  row_mask.bits.row = 0x7;  // 8 rows, 0-based
+  row_mask.bits.row = 0xF;  // 8 rows, 0-based
 
   IoBits clock, output_enable, strobe;    
   clock.bits.clock = 1;
