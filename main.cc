@@ -113,6 +113,33 @@ private:
   }
 };
 
+class Blend : public RGBMatrixManipulator {
+  public:
+    Blend(RGBMatrix *m) : RGBMatrixManipulator(m) {}
+
+    const int columns = matrix_->columns();
+    const int rows = matrix_->rows();
+
+    void Run() {
+      int r, g, b;
+      int count = 0;
+      while(running_){
+        usleep(5000);
+        for (int x = 0; x < columns; ++x){
+          for (int y = 0; y < rows; ++y){
+            r = (x + count) % 255;
+            b = (y + count) % 255; // y * 2^3
+            g = count % 255;
+            matrix_->SetPixel(x, y, r, g, b);
+          }
+        }
+        count++;
+      }
+    }
+
+  private:
+};
+
 class ImageScroller : public RGBMatrixManipulator {
 public:
   ImageScroller(RGBMatrix *m)
@@ -233,6 +260,10 @@ int main(int argc, char *argv[]) {
       fprintf(stderr, "Demo %d Requires PPM image as parameter", demo);
       return 1;
     }
+    break;
+
+  case 2:
+    image_gen = new Blend(&m);
     break;
 
   default:

@@ -21,6 +21,7 @@ class RGBMatrix {
   void UpdateScreen();
 
   int columns() const { return kColumns; }
+  int rows() const { return kDoubleRows * 2; }
 
 private:
   GPIO *const io_;
