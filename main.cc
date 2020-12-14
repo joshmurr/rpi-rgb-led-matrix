@@ -152,8 +152,8 @@ class Flame : public RGBMatrixManipulator {
     int buf[32 * 32];
 
 		const int colours[32] = {
-				0x070707,
-				0x1F0707,
+				0x020202,
+				0x030303,
 				0x2F0F07,
 				0x470F07,
 				0x571707,
@@ -199,7 +199,7 @@ class Flame : public RGBMatrixManipulator {
 
 
     void Run(){
-      int r, g, b;
+      uint8_t r, g, b;
       while(running_){
         usleep(50000);
         DoFire();
@@ -208,8 +208,8 @@ class Flame : public RGBMatrixManipulator {
 						int colour_idx = buf[y * columns + x];
             int colour = colours[colour_idx];
             r = (colour >> 16) & 0xFF;
-            g = (colour >> 8) & 0xFF;
-            b = colour & 0xFF;
+            b = (colour >> 8) & 0xFF;
+            g = colour & 0xFF;
             matrix_->SetPixel(x, y, r, g, b);
           }
         }
@@ -225,10 +225,13 @@ class Flame : public RGBMatrixManipulator {
       }
     }
     void SpreadFire(int from){
-			int r = (rand() % 5) + 1;
 			int p = buf[from];
-			int to = from - columns;
-      buf[to] = p - (r);
+      int to = from - columns;
+      if(p < 1) buf[to] = 0;
+      else {
+        int r = (rand() % 5);
+        buf[to] = p - (r);
+      }
 //std::cout << buf[to] << std::endl;
     }
 
