@@ -6,6 +6,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
 
 // Base-class for a Thread that does something with a matrix.
 class RGBMatrixManipulator : public Thread {
@@ -144,6 +145,106 @@ class Blend : public RGBMatrixManipulator {
   private:
 };
 
+class Flame : public RGBMatrixManipulator {
+  public:
+    const int columns = matrix_->columns();
+    const int rows = matrix_->rows();
+    int buf[32 * 32];
+
+		const int colours[32] = {
+				0x070707,
+				0x1F0707,
+				0x2F0F07,
+				0x470F07,
+				0x571707,
+				0x671F07,
+				0x771F07,
+				0x8F2707,
+				0x9F2F07,
+				0xAF3F07,
+				0xBF4707,
+				0xC74707,
+				0xDF4F07,
+				0xDF5707,
+				0xDF5707,
+				0xD75F07,
+				0xD7670F,
+				0xCF6F0F,
+				0xCF770F,
+				0xCF7F0F,
+				0xCF8717,
+				0xC78717,
+				0xC7971F,
+				0xBF9F1F,
+				0xBFA727,
+				0xBFAF2F,
+				0xB7AF2F,
+				0xB7B737,
+				0xCFCF6F,
+				0xDFDF9F,
+				0xEFEFC7,
+				0xFFFFFF
+		};
+
+    Flame(RGBMatrix *m) : RGBMatrixManipulator(m) {
+			// Set up canvas
+      for(int x=0; x<32; ++x){
+        for(int y=0; y<32; ++y){
+          int idx = y * 32 + x;
+          if(y == 31) buf[idx] = 31;
+          else buf[idx] = 0;
+        }
+      }
+		}
+
+
+    void Run(){
+      int r, g, b;
+      while(running_){
+        usleep(50000);
+        DoFire();
+        for (int x = 0; x < columns; ++x){
+          for (int y = 0; y < rows; ++y){
+						int colour_idx = buf[y * columns + x];
+            int colour = colours[colour_idx];
+            r = (colour >> 16) & 0xFF;
+            g = (colour >> 8) & 0xFF;
+            b = colour & 0xFF;
+            matrix_->SetPixel(x, y, r, g, b);
+          }
+        }
+      }
+    }
+
+  private:
+    void DoFire(void){
+      for (int x = 0; x < columns; ++x){
+        for (int y = 1; y < rows; ++y){
+          SpreadFire(y * 32 + x);
+        }
+      }
+    }
+    void SpreadFire(int from){
+			int r = (rand() % 5) + 1;
+			int p = buf[from];
+			int to = from - columns;
+      buf[to] = p - (r);
+//std::cout << buf[to] << std::endl;
+    }
+
+		/*
+		void AutoColours(void){
+      uint8_t r, g, b;
+      for(int i=0; i<32; ++i) {
+        r = i << 3;
+        g = 32 - i;
+        b = i << 2;
+        colours[i] = (r << 16) | (g << 8) | b;
+      }
+    }
+		*/
+};
+
 class ImageScroller : public RGBMatrixManipulator {
 public:
   ImageScroller(RGBMatrix *m)
@@ -268,6 +369,10 @@ int main(int argc, char *argv[]) {
 
   case 2:
     image_gen = new Blend(&m);
+    break;
+
+  case 3:
+    image_gen = new Flame(&m);
     break;
 
   default:
