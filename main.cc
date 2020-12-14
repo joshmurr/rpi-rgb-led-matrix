@@ -119,21 +119,25 @@ class Blend : public RGBMatrixManipulator {
 
     const int columns = matrix_->columns();
     const int rows = matrix_->rows();
+    const float deg_to_rad = 2 * 3.14159265 / 360;
 
     void Run() {
       int r, g, b;
-      int count = 0;
+      float count = 0.0;
       while(running_){
-        usleep(5000);
+        count += 0.1;
+        usleep(50000);
         for (int x = 0; x < columns; ++x){
           for (int y = 0; y < rows; ++y){
-            r = (x + count) % 255;
-            b = (y + count) % 255; // y * 2^3
-            g = count % 255;
+            float u = 0.25 + sinf(count + (float)x / 32) * 0.25;
+            float v = 0.25 + cosf(count + (float)y / 32) * 0.25;
+            float s = 1.0 - v - u;
+            r = u * 64.0;
+            g = v * 64.0;
+            b = s * 64.0;
             matrix_->SetPixel(x, y, r, g, b);
           }
         }
-        count++;
       }
     }
 
