@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <time.h>
 
@@ -64,6 +65,7 @@ RGBMatrix::RGBMatrix(GPIO *io) : io_(io) {
   b.bits.row = 0xf;
   // Initialize outputs, make sure that all of these are supported bits.
   const uint32_t result = io_->InitOutputs(b.raw);
+  printf("Init GPIO Outputs\n");
   assert(result == b.raw);
   assert(kPWMBits < 8);    // only up to 7 makes sense.
   ClearScreen();

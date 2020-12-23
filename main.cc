@@ -1,4 +1,5 @@
 #include "thread.h"
+#include "gpio.h"
 #include "led-matrix.h"
 
 #include <assert.h>
@@ -36,34 +37,6 @@ public:
 
 // -- The following are demo image generators.
 
-// Simple generator that pulses through RGB and White.
-class ColorPulseGenerator : public RGBMatrixManipulator {
-public:
-  ColorPulseGenerator(RGBMatrix *m) : RGBMatrixManipulator(m) {}
-  void Run() {
-    const int columns = matrix_->columns();
-    uint32_t count = 0;
-    while (running_) {
-      usleep(5000);
-      ++count;
-      int color = (count >> 9) % 6;
-      int value = count & 0xFF;
-      if (count & 0x100) value = 255 - value;
-      int r, g, b;
-      switch (color) {
-      case 0: r = value; g = b = 0; break;
-      case 1: r = g = value; b = 0; break;
-      case 2: g = value; r = b = 0; break;
-      case 3: g = b = value; r = 0; break;
-      case 4: b = value; r = g = 0; break;
-      default: r = g = b = value; break;
-      }
-      for (int x = 0; x < columns; ++x)
-        for (int y = 0; y < 32; ++y)
-          matrix_->SetPixel(x, y, r, g, b);
-    }
-  }
-};
 
 // Simple class that generates a rotating block on the screen.
 class RotatingBlockGenerator : public RGBMatrixManipulator {
@@ -232,7 +205,6 @@ class Flame : public RGBMatrixManipulator {
         int r = (rand() % 5);
         buf[to] = p - (r);
       }
-//std::cout << buf[to] << std::endl;
     }
 
 		/*
@@ -352,57 +324,66 @@ int main(int argc, char *argv[]) {
 
   RGBMatrix m(&io);
     
-  RGBMatrixManipulator *image_gen = NULL;
-  switch (demo) {
-  case 0:
-    image_gen = new RotatingBlockGenerator(&m);
-    break;
 
-  case 1:
-    if (argc > 2) {
-      ImageScroller *scroller = new ImageScroller(&m);
-      if (!scroller->LoadPPM(argv[2]))
+  // MAIN LOOP
+  while(1){
+    if(io.ReadBit(11)){
+      io.SetBits(1 << 14); // Turn on button LED
+
+      RGBMatrixManipulator *updater = new DisplayUpdater(&m);
+      RGBMatrixManipulator *image_gen = NULL;
+      switch (demo) {
+      case 0:
+        image_gen = new RotatingBlockGenerator(&m);
+        break;
+
+      case 1:
+        if (argc > 2) {
+          ImageScroller *scroller = new ImageScroller(&m);
+          if (!scroller->LoadPPM(argv[2]))
+            return 1;
+          image_gen = scroller;
+        } else {
+          fprintf(stderr, "Demo %d Requires PPM image as parameter", demo);
+          return 1;
+        }
+        break;
+
+      case 2:
+        image_gen = new Blend(&m);
+        break;
+
+      default:
+        image_gen = new Flame(&m);
+        break;
+      }
+
+      if (image_gen == NULL)
         return 1;
-      image_gen = scroller;
-    } else {
-      fprintf(stderr, "Demo %d Requires PPM image as parameter", demo);
-      return 1;
+
+      io.InitButton();
+
+      updater->Start(10);  // high priority
+      image_gen->Start();
+
+      while(io.ReadBit(11)) {
+        // Wait for button release
+      }
+
+      printf("Ending Animation\n");
+
+      delete image_gen;
+      delete updater;
+
+      io.ClearBits(1 << 14); // Turn off button LED
+
+      // Final thing before exit: clear screen and update once, so that
+      // we don't have random pixels burn
+      m.ClearScreen();
+      m.UpdateScreen();
     }
-    break;
-
-  case 2:
-    image_gen = new Blend(&m);
-    break;
-
-  case 3:
-    image_gen = new Flame(&m);
-    break;
-
-  default:
-    image_gen = new ColorPulseGenerator(&m);
-    break;
+    // else { Wait Patiently }
   }
-
-  if (image_gen == NULL)
-    return 1;
-
-  RGBMatrixManipulator *updater = new DisplayUpdater(&m);
-  updater->Start(10);  // high priority
-
-  image_gen->Start();
-
-  // Things are set up. Just wait for <RETURN> to be pressed.
-  printf("Press <RETURN> to exit and reset LEDs\n");
-  getchar();
-
-  // Stopping threads and wait for them to join.
-  delete image_gen;
-  delete updater;
-
-  // Final thing before exit: clear screen and update once, so that
-  // we don't have random pixels burn
-  m.ClearScreen();
-  m.UpdateScreen();
 
   return 0;
 }

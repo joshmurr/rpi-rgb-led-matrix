@@ -15,6 +15,8 @@ class GPIO {
   // (e.g. due to a permission problem).
   bool Init();
 
+  void InitButton();
+
   // Initialize outputs.
   // Returns the bits that are actually set.
   uint32_t InitOutputs(uint32_t outputs);
@@ -27,6 +29,10 @@ class GPIO {
   // Clear the bits that are '1' in the output. Leave the rest untouched.
   inline void ClearBits(uint32_t value) {
     *(gpio_port_ + 10) = value;
+  }
+
+  inline bool ReadBit(uint32_t gpio){
+    return *(gpio_port_ + 13) &= (1<<gpio);
   }
 
   inline void Write(uint32_t value) {

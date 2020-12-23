@@ -10,16 +10,17 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
-#define PAGE_SIZE (4*1024)
-#define BLOCK_SIZE (4*1024)
+#define PAGE_SIZE          (4*1024)
+#define BLOCK_SIZE         (4*1024)
 
 // GPIO setup macros. Always use INP_GPIO(x) before using OUT_GPIO(x) or SET_GPIO_ALT(x,y)
-#define INP_GPIO(g) *(gpio_port_+((g)/10)) &= ~(7<<(((g)%10)*3))
-#define OUT_GPIO(g) *(gpio_port_+((g)/10)) |=  (1<<(((g)%10)*3))
+#define INP_GPIO(g)       *(gpio_port_+((g)/10)) &= ~(7<<(((g)%10)*3))
+#define OUT_GPIO(g)       *(gpio_port_+((g)/10)) |=  (1<<(((g)%10)*3))
 #define SET_GPIO_ALT(g,a) *(gpio+(((g)/10))) |= (((a)<=3?(a)+4:(a)==4?3:2)<<(((g)%10)*3))
 
-#define GPIO_SET *(gpio+7)  // sets   bits which are 1 ignores bits which are 0
-#define GPIO_CLR *(gpio+10) // clears bits which are 1 ignores bits which are 0
+#define GPIO_SET          *(gpio+7)  // sets   bits which are 1 ignores bits which are 0
+#define GPIO_CLR          *(gpio+10) // clears bits which are 1 ignores bits which are 0
+#define GPIO_READ(g)      *(gpio.addr + 13) &= (1<<(g))
 
 /*static*/ const uint32_t GPIO::kValidBits 
 = ((1 <<  2) | (1 <<  3) | (1 <<  4) | (1 <<  7)| (1 << 8) | (1 <<  9) |
@@ -44,6 +45,12 @@ uint32_t GPIO::InitOutputs(uint32_t outputs) {
     }
   }
   return output_bits_;
+}
+
+void GPIO::InitButton(){
+  INP_GPIO(14);
+  OUT_GPIO(14);
+  INP_GPIO(11);
 }
 
 // Based on code example found in http://elinux.org/RPi_Low-level_peripherals

@@ -17,6 +17,7 @@ Thread::~Thread() {
   if (result != 0) {
     fprintf(stderr, "err code: %d %s\n", result, strerror(result));
   }
+  printf("Deleting thread\n");
 }
 
 void Thread::Start(int priority) {
